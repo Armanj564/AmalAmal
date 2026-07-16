@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AmalAmal.com</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --night: #171735;
+    --night-deep: #0f0f26;
+    --gold: #e8b84b;
+    --gold-soft: #f3d68a;
+    --blush: #f2a7a0;
+    --cream: #f6f1e6;
+    --dim: #a9a7c9;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(ellipse at 50% 20%, var(--night) 0%, var(--night-deep) 70%);
+    color: var(--cream);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+  }
+
+  #stars {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--cream);
+    opacity: 0.6;
+    animation: twinkle 4s ease-in-out infinite;
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.9; }
+  }
+
+  #burst-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .glow-fill {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: radial-gradient(circle at 50% 60%, rgba(232,184,75,0.28), transparent 60%);
+    opacity: 0;
+    transition: opacity 2.5s ease;
+    pointer-events: none;
+  }
+
+  .glow-fill.on { opacity: 1; }
+
+  main {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 6vh 6vw;
+  }
+
+  .eyebrow {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold-soft);
+    margin-bottom: 1.5rem;
+    opacity: 0.85;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: clamp(2.2rem, 7vw, 4.2rem);
+    line-height: 1.1;
+    max-width: 16ch;
+    margin-bottom: 1.2rem;
+    letter-spacing: -0.01em;
+  }
+
+  h1 em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--gold-soft);
+  }
+
+  .sub {
+    font-size: clamp(0.95rem, 2vw, 1.15rem);
+    color: var(--dim);
+    max-width: 40ch;
+    line-height: 1.6;
+    margin-bottom: 3rem;
+  }
+
+  .question {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(1.6rem, 5vw, 2.4rem);
+    font-weight: 500;
+    max-width: 18ch;
+    margin-bottom: 2.8rem;
+    line-height: 1.25;
+  }
+
+  .btn-row {
+    position: relative;
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    min-height: 90px;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  button {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 0.95rem 2.4rem;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.3s ease;
+  }
+
+  #yesBtn {
+    background: linear-gradient(135deg, var(--gold-soft), var(--gold));
+    color: #241a06;
+  }
+
+  #yesBtn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 32px rgba(232,184,75,0.45);
+  }
+
+  #noBtn {
+    background: transparent;
+    color: var(--dim);
+    border: 1px solid rgba(169,167,201,0.4);
+    position: relative;
+  }
+
+  #noBtn.dodging {
+    position: fixed;
+  }
+
+  .hint {
+    margin-top: 1.6rem;
+    font-size: 0.8rem;
+    color: var(--dim);
+    opacity: 0.7;
+    min-height: 1.2em;
+  }
+
+  .screen {
+    display: none;
+  }
+
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .screen#screen-question.active,
+  .screen#screen-intro.active {
+    animation: fadeUp 0.9s ease forwards;
+  }
+
+  .message {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(1.3rem, 4vw, 1.9rem);
+    font-weight: 400;
+    max-width: 30ch;
+    line-height: 1.5;
+    margin-bottom: 1.6rem;
+  }
+
+  .message em { color: var(--gold-soft); font-style: italic; }
+
+  .popup-card {
+    background: rgba(23,23,53,0.55);
+    border: 1px solid rgba(232,184,75,0.35);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 2rem 2.4rem;
+    max-width: 26ch;
+    box-shadow: 0 0 50px rgba(232,184,75,0.25);
+    font-family: 'Fraunces', serif;
+    font-size: clamp(1.4rem, 5vw, 2rem);
+    font-weight: 500;
+    color: var(--gold-soft);
+    transform: scale(0.4);
+    opacity: 0;
+  }
+
+  .popup-card.pop {
+    animation: springPop 0.9s cubic-bezier(0.17, 0.89, 0.32, 1.49) forwards;
+  }
+
+  @keyframes springPop {
+    0% { transform: scale(0.3); opacity: 0; }
+    60% { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .footer-note {
+    margin-top: 2.2rem;
+    font-size: 0.8rem;
+    color: var(--dim);
+    max-width: 32ch;
+    line-height: 1.6;
+    opacity: 0.75;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .star { animation: none; opacity: 0.4; }
+    .glow-fill { transition: none; }
+    .popup-card.pop { animation: none; opacity: 1; transform: scale(1); }
+    .screen#screen-question.active, .screen#screen-intro.active { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+<div class="glow-fill" id="glow"></div>
+<canvas id="burst-canvas"></canvas>
+
+<main>
+
+  <!-- Screen 1: intro -->
+  <div class="screen active" id="screen-intro">
+    <p class="eyebrow">For Amal</p>
+    <h1>Your name has always meant <em>hope</em></h1>
+    <p class="sub">Hnde as d hatma xu tu hzret mn na darkate chubama kiva tu lsar hzra mn Tu  buy Xuze ta zaniba ka as chand 7ash ta dkam</p>
+    <button id="continueBtn" style="background: transparent; color: var(--gold-soft); border: 1px solid rgba(232,184,75,0.5);">Keep going</button>
+  </div>
+
+  <!-- Screen 2: the question -->
+  <div class="screen" id="screen-question">
+    <p class="eyebrow">just one question</p>
+    <p class="question">Do you want to be my girlfriend again?</p>
+    <div class="btn-row">
+      <button id="yesBtn">yes</button>
+      <button id="noBtn">no</button>
+    </div>
+    <p class="hint" id="hint"></p>
+  </div>
+
+  <!-- Screen 3: yes -->
+  <div class="screen" id="screen-yes">
+    <p class="eyebrow">Ka Bumn machake l discorde vreka🤠</p>
+    <div class="popup-card" id="yesPopup">MN Zani tu 7ash mn dki😋😋😋😋😋😋😋😋😋😋</div>
+  </div>
+
+  <!-- Screen 4: no -->
+  <div class="screen" id="screen-no">
+    <p class="eyebrow">Okay</p>
+    <p class="message">That's alright, I'd rather know than keep wondering. <em>Thank you</em> for being honest with me, that still means a lot.</p>
+    <p class="footer-note">No pressure either way, I still hope we stay in each other's lives.</p>
+  </div>
+
+</main>
+
+<script>
+  // Starfield
+  const starsContainer = document.getElementById('stars');
+  const starCount = 90;
+  for (let i = 0; i < starCount; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2 + 1;
+    s.style.width = size + 'px';
+    s.style.height = size + 'px';
+    s.style.top = Math.random() * 100 + 'vh';
+    s.style.left = Math.random() * 100 + 'vw';
+    s.style.animationDelay = (Math.random() * 4) + 's';
+    s.style.animationDuration = (3 + Math.random() * 3) + 's';
+    starsContainer.appendChild(s);
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  document.getElementById('continueBtn').addEventListener('click', () => {
+    showScreen('screen-question');
+  });
+
+  // The "no" button runs away on each click, then disappears on the 3rd click
+  const noBtn = document.getElementById('noBtn');
+  const hint = document.getElementById('hint');
+  let noClickCount = 0;
+  const maxNoClicks = 3;
+  const dodgeMessages = [
+    "hm, try again",
+    "nope, still no"
+  ];
+
+  function moveNoButton() {
+    const rect = noBtn.getBoundingClientRect();
+    const btnW = rect.width, btnH = rect.height;
+    const margin = 40;
+    const maxX = window.innerWidth - btnW - margin;
+    const maxY = window.innerHeight - btnH - margin;
+    const newX = Math.max(margin, Math.random() * maxX);
+    const newY = Math.max(margin, Math.random() * maxY);
+
+    noBtn.classList.add('dodging');
+    noBtn.style.left = newX + 'px';
+    noBtn.style.top = newY + 'px';
+  }
+
+  noBtn.addEventListener('click', () => {
+    noClickCount++;
+
+    if (noClickCount >= maxNoClicks) {
+      hint.textContent = "";
+      noBtn.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+      noBtn.style.opacity = '0';
+      noBtn.style.transform = 'scale(0.5)';
+      setTimeout(() => { noBtn.style.display = 'none'; }, 500);
+      return;
+    }
+
+    moveNoButton();
+    hint.textContent = dodgeMessages[noClickCount - 1];
+  });
+
+  // ---- Particle physics burst (canvas) ----
+  const canvas = document.getElementById('burst-canvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  let animId = null;
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function spawnBurst() {
+    if (reduceMotion) return;
+    const colors = ['#e8b84b', '#f3d68a', '#f2a7a0', '#f6f1e6'];
+    const originX = canvas.width / 2;
+    const originY = canvas.height * 0.62;
+    const count = 140;
+
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 3 + Math.random() * 9;
+      particles.push({
+        x: originX,
+        y: originY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 4,
+        gravity: 0.18 + Math.random() * 0.08,
+        drag: 0.985,
+        size: 2 + Math.random() * 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: 1,
+        decay: 0.006 + Math.random() * 0.01,
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.2
+      });
+    }
+
+    if (!animId) animate();
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    particles.forEach(p => {
+      p.vx *= p.drag;
+      p.vy = p.vy * p.drag + p.gravity;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rotation += p.rotSpeed;
+      p.life -= p.decay;
+    });
+
+    particles = particles.filter(p => p.life > 0 && p.y < canvas.height + 40);
+
+    particles.forEach(p => {
+      ctx.save();
+      ctx.globalAlpha = Math.max(p.life, 0);
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.fillStyle = p.color;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 8;
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+      ctx.restore();
+    });
+
+    if (particles.length > 0) {
+      animId = requestAnimationFrame(animate);
+    } else {
+      animId = null;
+    }
+  }
+
+  document.getElementById('yesBtn').addEventListener('click', () => {
+    document.getElementById('glow').classList.add('on');
+    showScreen('screen-yes');
+    spawnBurst();
+    setTimeout(spawnBurst, 260);
+    setTimeout(spawnBurst, 520);
+
+    const popup = document.getElementById('yesPopup');
+    popup.classList.remove('pop');
+    void popup.offsetWidth; // restart animation
+    popup.classList.add('pop');
+  });
+</script>
+
+</body>
+</html>
